@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2MWatch — Welcome</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #0a0a0f;
+      color: #e8e8f0;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem;
+    }
+
+    .stars-bg {
+      position: fixed; inset: 0; z-index: 0;
+      background: radial-gradient(ellipse at 20% 50%, rgba(124,106,247,0.06) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, rgba(232,201,109,0.05) 0%, transparent 50%);
+    }
+
+    .wrap {
+      position: relative; z-index: 1;
+      text-align: center; max-width: 560px; width: 100%;
+    }
+
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 3rem; font-weight: 900;
+      color: #e8c96d; letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .logo span { color: #7c6af7; }
+
+    .tagline {
+      color: #6b6b80; font-size: 1rem;
+      margin-bottom: 3rem;
+    }
+
+    .cards {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: #111118;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s;
+      display: flex; flex-direction: column; align-items: center; gap: 1rem;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    .card.user { border-color: rgba(124,106,247,0.3); }
+    .card.user:hover { border-color: rgba(124,106,247,0.7); background: rgba(124,106,247,0.05); }
+    .card.admin { border-color: rgba(232,201,109,0.3); }
+    .card.admin:hover { border-color: rgba(232,201,109,0.7); background: rgba(232,201,109,0.05); }
+
+    .card-icon { font-size: 2.5rem; }
+
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem; font-weight: 700;
+    }
+    .card.user .card-title { color: #7c6af7; }
+    .card.admin .card-title { color: #e8c96d; }
+
+    .card-desc {
+      font-size: 0.82rem; color: #6b6b80;
+      line-height: 1.5; text-align: center;
+    }
+
+    .card-btn {
+      margin-top: 0.5rem;
+      padding: 0.55rem 1.5rem;
+      border-radius: 8px;
+      font-size: 0.85rem; font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .card.user .card-btn { background: #7c6af7; color: white; }
+    .card.admin .card-btn { background: #e8c96d; color: #0a0a0f; }
+
+    .register-link {
+      color: #6b6b80; font-size: 0.875rem;
+    }
+    .register-link a { color: #7c6af7; text-decoration: none; }
+    .register-link a:hover { text-decoration: underline; }
+
+    @media (max-width: 480px) {
+      .cards { grid-template-columns: 1fr; }
+      .logo { font-size: 2.2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stars-bg"></div>
+  <div class="wrap">
+    <div class="logo">2M<span>Watch</span></div>
+    <p class="tagline"><strong>Discover films that inspire you and share your thoughts with others</strong></p>
+
+    <div class="cards">
+      <a href="/login/" class="card user">
+        <div class="card-icon">🎬</div>
+        <div class="card-title">User Login</div>
+        <div class="card-desc">Discover movies, rate films, and get personalized recommendations</div>
+        <div class="card-btn">Sign In</div>
+      </a>
+
+      <a href="/admin/" class="card admin">
+        <div class="card-icon">⚙️</div>
+        <div class="card-title">Admin Login</div>
+        <div class="card-desc">Manage movies, users, ratings and the full database</div>
+        <div class="card-btn">Admin Panel</div>
+      </a>
+    </div>
+
+    <p class="register-link">
+      New here? <a href="/register/">Create a free account</a>
+    </p>
+  </div>
+</body>
+</html>

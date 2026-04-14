@@ -1,0 +1,153 @@
+{% extends 'movies/base.html' %}
+{% load movie_tags %}
+{% block title %}2MWatch — Your Recommendations{% endblock %}
+
+{% block extra_css %}
+<style>
+.hero {
+  background: linear-gradient(180deg, rgba(124,106,247,0.08) 0%, transparent 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 3rem 0 2rem;
+}
+.hero h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 0.75rem;
+}
+.hero h1 em { color: var(--gold); font-style: normal; }
+.hero p { color: var(--text-muted); font-size: 1.05rem; max-width: 480px; }
+
+.onboarding {
+  text-align: center; padding: 5rem 2rem;
+}
+.onboarding h2 { font-family: 'Playfair Display', serif; font-size: 2rem; margin-bottom: 1rem; }
+.onboarding p { color: var(--text-muted); max-width: 400px; margin: 0 auto 2rem; }
+.step-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; max-width: 700px; margin: 2rem auto 0; }
+.step {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.5rem 1rem; text-align: center;
+}
+.step .icon { font-size: 2rem; margin-bottom: 0.75rem; }
+.step h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.25rem; }
+.step p { font-size: 0.8rem; color: var(--text-muted); }
+
+.confidence-bar {
+  height: 3px; background: var(--surface2); border-radius: 2px;
+  margin-top: 0.5rem; overflow: hidden;
+}
+.confidence-fill {
+  height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--gold));
+  transition: width 0.6s ease;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+  <div class="container">
+    {% if has_ratings %}
+    <h1>Your <em>Personalized</em><br>Recommendations</h1>
+    <p>Curated by collaborative filtering — based on users with taste like yours.</p>
+    {% else %}
+    <h1>Discover Your<br>Next <em>Favorite</em> Film</h1>
+    <p>Rate a few movies to unlock personalized AI-powered recommendations.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="container page">
+
+{% if has_ratings %}
+  <div class="section-header">
+    <h2 class="section-title">✦ Picked <span>For You</span></h2>
+    <a href="{% url 'movie_list' %}" class="btn btn-ghost">Browse all →</a>
+  </div>
+
+  <div class="movie-grid">
+    {% for movie, score in scored_movies %}
+    <div class="movie-card">
+      {% if score %}<div class="score-badge">⚡ {{ score|floatformat:1 }}</div>{% endif %}
+      <button class="watchlist-btn {% if movie.pk in watchlist_ids %}active{% endif %}"
+              data-movie="{{ movie.pk }}"
+              title="{% if movie.pk in watchlist_ids %}Remove{% else %}Add to watchlist{% endif %}">
+        {% if movie.pk in watchlist_ids %}📌{% else %}＋{% endif %}
+      </button>
+      {% if movie.poster_url %}
+      <img class="poster" src="{{ movie.poster_url }}" alt="{{ movie.title }}" loading="lazy"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="poster-placeholder" style="display:none">🎬</div>
+      {% else %}
+      <div class="poster-placeholder">🎬</div>
+      {% endif %}
+      <div class="card-body">
+        <div class="card-title"><a href="{% url 'movie_detail' movie.pk %}">{{ movie.title }}</a></div>
+        <div class="card-meta">
+          <span>{{ movie.release_year }}</span>
+          <span>·</span>
+          <span class="avg-rating">★ {{ movie.average_rating }}</span>
+        </div>
+        <div class="stars star-rating" data-movie="{{ movie.pk }}">
+          {% for i in "12345" %}
+          <span class="star {% if user_ratings|get_item:movie.pk >= forloop.counter %}filled{% endif %}"
+                data-score="{{ forloop.counter }}">★</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+{% else %}
+  <div class="onboarding">
+    <div style="font-size:4rem;margin-bottom:1rem;">🎬</div>
+    <h2>Rate Movies to Get<br>Personalized Picks</h2>
+    <p>Our collaborative filtering engine learns from users who share your taste.</p>
+    <a href="{% url 'movie_list' %}" class="btn btn-gold" style="font-size:1rem;padding:0.75rem 2rem;">
+      Browse & Rate Movies
+    </a>
+    <div class="step-grid">
+      <div class="step"><div class="icon">⭐</div><h4>Rate Movies</h4><p>Give stars to films you've seen</p></div>
+      <div class="step"><div class="icon">🤝</div><h4>Find Your Tribe</h4><p>We match you with similar users</p></div>
+      <div class="step"><div class="icon">✨</div><h4>Discover Films</h4><p>Get personalized recommendations</p></div>
+    </div>
+  </div>
+{% endif %}
+
+{% if recently_rated %}
+<hr>
+<div class="section-header" style="margin-top:2rem;">
+  <h2 class="section-title">Recently <span>Rated</span></h2>
+  <a href="{% url 'profile' %}" class="btn btn-ghost">View all →</a>
+</div>
+<div class="movie-grid">
+  {% for rating in recently_rated %}
+  {% with movie=rating.movie %}
+  <div class="movie-card">
+    {% if movie.poster_url %}
+    <img class="poster" src="{{ movie.poster_url }}" alt="{{ movie.title }}" loading="lazy"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <div class="poster-placeholder" style="display:none">🎬</div>
+    {% else %}
+    <div class="poster-placeholder">🎬</div>
+    {% endif %}
+    <div class="card-body">
+      <div class="card-title"><a href="{% url 'movie_detail' movie.pk %}">{{ movie.title }}</a></div>
+      <div class="card-meta"><span>{{ movie.release_year }}</span></div>
+      <div class="stars star-rating" data-movie="{{ movie.pk }}">
+        {% for i in "12345" %}
+        <span class="star {% if rating.score >= forloop.counter %}filled{% endif %}"
+              data-score="{{ forloop.counter }}">★</span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endwith %}
+  {% endfor %}
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

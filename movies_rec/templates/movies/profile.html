@@ -1,0 +1,144 @@
+{% extends 'movies/base.html' %}
+{% load movie_tags %}
+{% block title %}My Profile — 2MWatch{% endblock %}
+{% block extra_css %}
+<style>
+.profile-header {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 2rem;
+  display: flex; align-items: center; gap: 2rem;
+  margin-bottom: 2rem;
+}
+.avatar {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem; font-weight: 900; color: white;
+  flex-shrink: 0;
+}
+.stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 2rem; }
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.25rem;
+  text-align: center;
+}
+.stat-card .num {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem; font-weight: 900; color: var(--gold);
+}
+.stat-card .label { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; }
+.dist-bar { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+.dist-label { width: 24px; text-align: right; font-size: 0.875rem; }
+.dist-track { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+.dist-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--gold)); }
+.dist-count { width: 24px; font-size: 0.8rem; color: var(--text-muted); }
+.rating-row {
+  display: grid; grid-template-columns: 80px 1fr auto;
+  align-items: center; gap: 1rem; padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.rating-row:last-child { border-bottom: none; }
+.mini-poster {
+  width: 80px; height: 120px; object-fit: cover;
+  border-radius: 6px; background: var(--surface2);
+}
+.mini-poster-ph {
+  width: 80px; height: 120px; border-radius: 6px;
+  background: var(--surface2); display: flex; align-items: center;
+  justify-content: center; font-size: 1.5rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container page">
+  <div class="profile-header">
+    <div class="avatar">{{ user.username|slice:":1"|upper }}</div>
+    <div>
+      <h1 style="font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:900;">{{ user.username }}</h1>
+      <p style="color:var(--text-muted);margin-top:0.25rem;">Member since {{ user.date_joined|date:"F Y" }}</p>
+    </div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="num">{{ total_ratings }}</div>
+      <div class="label">Movies Rated</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">{{ watchlist_count }}</div>
+      <div class="label">In Watchlist</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">
+        {% if total_ratings %}
+        {{ ratings|first }}
+        {% with sum=0 %}
+        {% for r in ratings %}{% endfor %}
+        {% endwith %}
+        —
+        {% endif %}
+        {{ total_ratings|default:"0" }}
+      </div>
+      <div class="label">Total Ratings</div>
+    </div>
+  </div>
+
+  <!-- Rating Distribution -->
+  <div class="section-header"><h2 class="section-title">Rating <span>Distribution</span></h2></div>
+  <div style="max-width:400px;margin-bottom:2rem;">
+    {% for score, count in rating_dist.items %}
+    <div class="dist-bar">
+      <span class="dist-label">{{ score }}★</span>
+      <div class="dist-track">
+        <div class="dist-fill" style="width:{% if total_ratings %}{{ count|floatformat:0 }}{% else %}0{% endif %}%">
+        </div>
+      </div>
+      <span class="dist-count">{{ count }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Rating History -->
+  <div class="section-header"><h2 class="section-title">Rating <span>History</span></h2></div>
+  {% if ratings %}
+  <div>
+    {% for rating in ratings %}
+    <div class="rating-row">
+      {% if rating.movie.poster_url %}
+      <img class="mini-poster" src="{{ rating.movie.poster_url }}" alt="{{ rating.movie.title }}"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="mini-poster-ph" style="display:none">🎬</div>
+      {% else %}
+      <div class="mini-poster-ph">🎬</div>
+      {% endif %}
+      <div>
+        <div style="font-weight:600;margin-bottom:0.25rem;">
+          <a href="{% url 'movie_detail' rating.movie.pk %}" style="color:var(--text);text-decoration:none;">
+            {{ rating.movie.title }}
+          </a>
+        </div>
+        <div style="font-size:0.8rem;color:var(--text-muted);">{{ rating.movie.release_year }}</div>
+      </div>
+      <div>
+        <div style="color:var(--gold);font-size:1.1rem;">
+          {% for i in "12345" %}{% if forloop.counter <= rating.score %}★{% else %}☆{% endif %}{% endfor %}
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-muted);text-align:right;">
+          {{ rating.updated_at|date:"M j" }}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">⭐</div>
+    <h3>No ratings yet</h3>
+    <p>Start rating movies to see your history here.</p>
+    <a href="{% url 'movie_list' %}" class="btn btn-gold" style="margin-top:1rem;">Browse Movies</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

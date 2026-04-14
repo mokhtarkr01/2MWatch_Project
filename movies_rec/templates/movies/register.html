@@ -1,0 +1,61 @@
+{% extends 'movies/base.html' %}
+{% block title %}Create Account — 2MWatch{% endblock %}
+
+{% block extra_css %}
+<style>
+.auth-wrap {
+  min-height: calc(100vh - 64px);
+  display: flex; align-items: center; justify-content: center; padding: 2rem;
+}
+.auth-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 2.5rem; width: 100%; max-width: 420px;
+}
+.auth-title { font-family: 'Playfair Display', serif; font-size: 1.75rem; font-weight: 900; margin-bottom: 0.5rem; }
+.auth-sub { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+.field { margin-bottom: 1.25rem; }
+.field label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; }
+.field input {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 0.75rem 1rem; border-radius: 8px;
+  font-family: inherit; font-size: 0.95rem; outline: none; transition: border-color 0.2s;
+}
+.field input:focus { border-color: var(--accent); }
+.field .errorlist { list-style: none; color: var(--danger); font-size: 0.8rem; margin-top: 0.4rem; }
+.field .helptext { color: var(--text-muted); font-size: 0.78rem; margin-top: 0.4rem; }
+.submit-btn {
+  width: 100%; padding: 0.85rem;
+  background: var(--gold); color: #0a0a0f;
+  border: none; border-radius: 8px; cursor: pointer;
+  font-family: inherit; font-size: 1rem; font-weight: 700; transition: all 0.2s;
+}
+.submit-btn:hover { background: #f0d47f; transform: translateY(-1px); }
+.auth-footer { text-align: center; margin-top: 1.5rem; color: var(--text-muted); font-size: 0.875rem; }
+.auth-footer a { color: var(--accent); text-decoration: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h1 class="auth-title">Start Discovering</h1>
+    <p class="auth-sub">Create an account to unlock AI-powered movie recommendations.</p>
+
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        {% if field.help_text %}<div class="helptext">{{ field.help_text }}</div>{% endif %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="submit-btn">Create Account</button>
+    </form>
+    <div class="auth-footer">
+      Already have an account? <a href="{% url 'login' %}">Sign in</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

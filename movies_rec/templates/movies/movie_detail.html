@@ -1,0 +1,240 @@
+{% extends 'movies/base.html' %}
+{% load movie_tags %}
+{% block title %}{{ movie.title }} — 2MWatch{% endblock %}
+
+{% block extra_css %}
+<style>
+.detail-hero {
+  display: grid; grid-template-columns: 280px 1fr; gap: 3rem;
+  padding: 3rem 0 2rem;
+}
+@media (max-width: 768px) {
+  .detail-hero { grid-template-columns: 1fr; gap: 1.5rem; }
+  .detail-poster { max-width: 200px; }
+}
+.detail-poster {
+  border-radius: var(--radius); overflow: hidden;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+  aspect-ratio: 2/3; background: var(--surface2);
+}
+.detail-poster img { width: 100%; height: 100%; object-fit: cover; }
+.detail-info { padding-top: 0.5rem; }
+.detail-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 900; line-height: 1.1;
+  margin-bottom: 0.75rem;
+}
+.detail-meta {
+  display: flex; flex-wrap: wrap; gap: 1rem;
+  color: var(--text-muted); font-size: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+.detail-meta strong { color: var(--text); }
+.detail-genres { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
+.detail-desc {
+  color: var(--text-muted); line-height: 1.8;
+  margin-bottom: 2rem; max-width: 600px;
+}
+.rating-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.rating-section h3 {
+  font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-muted); margin-bottom: 1rem;
+}
+.big-stars { display: flex; gap: 6px; }
+.big-stars .star { font-size: 1.75rem; }
+.community-rating {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1.25rem;
+  background: var(--surface2); border-radius: 10px;
+}
+.community-rating .big-number {
+  font-family: 'Playfair Display', serif;
+  font-size: 3rem; font-weight: 900; color: var(--gold);
+  line-height: 1;
+}
+.community-rating .details { color: var(--text-muted); font-size: 0.875rem; }
+.actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.review-list { list-style: none; }
+.review-item {
+  padding: 1rem 0; border-bottom: 1px solid var(--border);
+}
+.review-item:last-child { border-bottom: none; }
+.review-item .reviewer {
+  font-weight: 600; font-size: 0.875rem;
+  display: flex; align-items: center; gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="detail-hero">
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      <div class="detail-poster">
+        {% if movie.poster_url %}
+        <img src="{{ movie.poster_url }}" alt="{{ movie.title }}"
+             onerror="this.style.display='none'">
+        {% else %}
+        <div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:5rem;">🎬</div>
+        {% endif %}
+      </div>
+      {% if trailer_embed_url %}
+      <a href="{{ movie.trailer_url }}" target="_blank" rel="noopener noreferrer"
+         class="btn" style="display:flex;align-items:center;justify-content:center;gap:0.6rem;">
+        ▶ Watch Trailer on YouTube
+      </a>
+      {% endif %}
+    </div>
+
+    <div class="detail-info">
+      <div class="detail-genres">
+        {% for genre in movie.genres.all %}
+        <a href="{% url 'movie_list' %}?genre={{ genre.pk }}" class="badge badge-accent">{{ genre.name }}</a>
+        {% endfor %}
+      </div>
+
+      <h1 class="detail-title">{{ movie.title }}</h1>
+
+      <div class="detail-meta">
+        <span><strong>{{ movie.release_year }}</strong></span>
+        {% if movie.director %}<span>Directed by <strong>{{ movie.director }}</strong></span>{% endif %}
+        {% if movie.duration_min %}<span><strong>{{ movie.duration_min }}m</strong></span>{% endif %}
+      </div>
+
+      {% if movie.description %}
+      <p class="detail-desc">{{ movie.description }}</p>
+      {% endif %}
+
+      <!-- Community Rating -->
+      <div class="community-rating" style="margin-bottom:1.5rem;">
+        <div class="big-number avg-rating">{{ movie.average_rating }}</div>
+        <div>
+          <div class="details">
+            <div style="color:var(--gold);margin-bottom:0.25rem;">
+              {% with avg=movie.average_rating %}
+              {% for i in "12345" %}★{% endfor %}
+              {% endwith %}
+            </div>
+            {{ movie.rating_count }} rating{{ movie.rating_count|pluralize }} · Community Score
+          </div>
+        </div>
+      </div>
+
+      <!-- User Rating -->
+      <div class="rating-section">
+        <h3>Your Rating</h3>
+        <div class="big-stars star-rating" data-movie="{{ movie.pk }}">
+          {% for i in "12345" %}
+          <span class="star {% if user_rating and user_rating.score >= forloop.counter %}filled{% endif %}"
+                data-score="{{ forloop.counter }}">★</span>
+          {% endfor %}
+        </div>
+        {% if user_rating %}
+        <p style="margin-top:0.75rem;font-size:0.85rem;color:var(--text-muted);">
+          You rated this {{ user_rating.score }}/5 stars
+        </p>
+        {% else %}
+        <p style="margin-top:0.75rem;font-size:0.85rem;color:var(--text-muted);">
+          Click a star to rate this movie
+        </p>
+        {% endif %}
+      </div>
+
+      <div class="actions">
+        <button class="btn watchlist-btn {% if in_watchlist %}active{% endif %}"
+                data-movie="{{ movie.pk }}"
+                style="position:static;width:auto;height:auto;border-radius:8px;padding:0.5rem 1.25rem;font-size:0.875rem;">
+          {% if in_watchlist %}📌 In Watchlist{% else %}＋ Add to Watchlist{% endif %}
+        </button>
+        <a href="{% url 'movie_list' %}" class="btn btn-ghost">← Back to Browse</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<hr>
+
+<!-- Similar Movies -->
+{% if similar_movies %}
+<div class="container" style="padding-bottom:3rem;">
+  <div class="section-header">
+    <h2 class="section-title">Similar <span>Movies</span></h2>
+  </div>
+  <div class="movie-grid">
+    {% for sim in similar_movies %}
+    <div class="movie-card">
+      <button class="watchlist-btn {% if sim.pk in watchlist_ids %}active{% endif %}"
+              data-movie="{{ sim.pk }}">
+        {% if sim.pk in watchlist_ids %}📌{% else %}＋{% endif %}
+      </button>
+      {% if sim.poster_url %}
+      <img class="poster" src="{{ sim.poster_url }}" alt="{{ sim.title }}" loading="lazy"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="poster-placeholder" style="display:none">🎬</div>
+      {% else %}
+      <div class="poster-placeholder">🎬</div>
+      {% endif %}
+      <div class="card-body">
+        <div class="card-title"><a href="{% url 'movie_detail' sim.pk %}">{{ sim.title }}</a></div>
+        <div class="card-meta">{{ sim.release_year }} · ★ {{ sim.average_rating }}</div>
+        <div class="stars star-rating" data-movie="{{ sim.pk }}">
+          {% for i in "12345" %}
+          <span class="star {% if user_ratings_map|get_item:sim.pk >= forloop.counter %}filled{% endif %}"
+                data-score="{{ forloop.counter }}">★</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Leave a Comment -->
+<div class="container" style="padding-bottom:2rem;">
+  <h2 class="section-title" style="margin-bottom:1rem;">Leave a <span>Comment</span></h2>
+  <form method="post" action="{% url 'add_comment' movie.pk %}" style="display:flex;flex-direction:column;gap:0.75rem;max-width:600px;">
+    {% csrf_token %}
+    <textarea name="comment" rows="4" placeholder="Share your thoughts about this movie…"
+      style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+             padding:0.75rem 1rem;color:var(--text);font-size:0.95rem;resize:vertical;outline:none;">{% if user_rating %}{{ user_rating.comment }}{% endif %}</textarea>
+    <button type="submit" class="btn" style="align-self:flex-start;">
+      {% if user_rating and user_rating.comment %}Update Comment{% else %}Post Comment{% endif %}
+    </button>
+  </form>
+</div>
+
+<!-- Community Reviews -->
+{% if all_ratings %}
+<div class="container" style="padding-bottom:3rem;">
+  <h2 class="section-title" style="margin-bottom:1rem;">Community <span>Reviews</span></h2>
+  <ul class="review-list">
+    {% for rating in all_ratings %}
+    <li class="review-item">
+      <div class="reviewer">
+        <span>{{ rating.user.username }}</span>
+        <span style="color:var(--gold);">
+          {% for i in "12345" %}{% if forloop.counter <= rating.score %}★{% else %}☆{% endif %}{% endfor %}
+        </span>
+        <span style="color:var(--text-muted);font-weight:400;font-size:0.8rem;">{{ rating.updated_at|date:"M j, Y" }}</span>
+      </div>
+      {% if rating.comment %}
+      <p style="margin-top:0.5rem;color:var(--text-muted);font-size:0.9rem;line-height:1.6;">{{ rating.comment }}</p>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% endblock %}

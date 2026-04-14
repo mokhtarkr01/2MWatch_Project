@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}2MWACTH{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #1a1a24;
+      --border: rgba(255,255,255,0.07);
+      --gold: #e8c96d;
+      --gold-dim: rgba(232,201,109,0.15);
+      --text: #e8e8f0;
+      --text-muted: #6b6b80;
+      --accent: #7c6af7;
+      --accent-dim: rgba(124,106,247,0.12);
+      --danger: #e05c5c;
+      --success: #5ce08a;
+      --radius: 12px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10,10,15,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+    .nav-brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem; font-weight: 900;
+      color: var(--gold);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+    .nav-brand span { color: var(--accent); }
+    .nav-links { display: flex; align-items: center; gap: 0.25rem; }
+    .nav-links a {
+      color: var(--text-muted); text-decoration: none;
+      padding: 0.5rem 0.9rem; border-radius: 8px;
+      font-size: 0.9rem; font-weight: 500;
+      transition: all 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); background: var(--surface2); }
+    .nav-links a.active { color: var(--gold); }
+    .nav-user {
+      display: flex; align-items: center; gap: 1rem;
+      font-size: 0.875rem; color: var(--text-muted);
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 1.25rem;
+      border-radius: 8px; border: none; cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem; font-weight: 600;
+      text-decoration: none; transition: all 0.2s;
+    }
+    .btn-gold { background: var(--gold); color: #0a0a0f; }
+    .btn-gold:hover { background: #f0d47f; transform: translateY(-1px); }
+    .btn-ghost {
+      background: transparent; color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--text-muted); color: var(--text); }
+    .btn-accent { background: var(--accent); color: white; }
+    .btn-accent:hover { background: #6b5ae6; transform: translateY(-1px); }
+
+    /* LAYOUT */
+    .container { max-width: 1280px; margin: 0 auto; padding: 0 2rem; }
+    .page { padding: 2.5rem 0 4rem; }
+
+    /* MOVIE CARD */
+    .movie-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1.5rem;
+    }
+    .movie-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: all 0.3s;
+      position: relative;
+    }
+    .movie-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255,255,255,0.15);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    .movie-card .poster {
+      width: 100%; aspect-ratio: 2/3;
+      object-fit: cover; display: block;
+      background: var(--surface2);
+    }
+    .movie-card .poster-placeholder {
+      width: 100%; aspect-ratio: 2/3;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--surface2) 0%, #1f1f2e 100%);
+      font-size: 3rem;
+    }
+    .movie-card .card-body { padding: 1rem; }
+    .movie-card .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.95rem; font-weight: 700;
+      color: var(--text); margin-bottom: 0.25rem;
+      line-height: 1.3;
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .movie-card .card-title a { color: inherit; text-decoration: none; }
+    .movie-card .card-title a:hover { color: var(--gold); }
+    .movie-card .card-meta {
+      font-size: 0.775rem; color: var(--text-muted);
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .stars { display: flex; gap: 2px; }
+    .star { font-size: 1rem; color: var(--text-muted); cursor: pointer; transition: color 0.15s; }
+    .star.filled { color: var(--gold); }
+    .star:hover, .star.hover { color: var(--gold); }
+    .badge {
+      display: inline-block; padding: 0.2rem 0.6rem;
+      border-radius: 100px; font-size: 0.7rem; font-weight: 600;
+      background: var(--surface2); color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+    .badge-gold { background: var(--gold-dim); color: var(--gold); border-color: rgba(232,201,109,0.3); }
+    .badge-accent { background: var(--accent-dim); color: var(--accent); border-color: rgba(124,106,247,0.3); }
+
+    .score-badge {
+      position: absolute; top: 0.75rem; left: 0.75rem;
+      background: rgba(10,10,15,0.9);
+      border: 1px solid var(--gold);
+      border-radius: 6px; padding: 0.2rem 0.5rem;
+      font-size: 0.75rem; font-weight: 700; color: var(--gold);
+    }
+
+    .watchlist-btn {
+      position: absolute; top: 0.75rem; right: 0.75rem;
+      background: rgba(10,10,15,0.8);
+      border: 1px solid var(--border);
+      border-radius: 6px; width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1rem; transition: all 0.2s;
+      color: var(--text-muted);
+    }
+    .watchlist-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .watchlist-btn.active { color: var(--gold); border-color: var(--gold); background: var(--gold-dim); }
+
+    /* SECTION */
+    .section-header {
+      display: flex; align-items: baseline; justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem; font-weight: 700;
+    }
+    .section-title span { color: var(--gold); }
+
+    /* MESSAGES */
+    .messages { list-style: none; margin-bottom: 1rem; }
+    .messages li {
+      padding: 0.75rem 1rem; border-radius: 8px;
+      margin-bottom: 0.5rem; font-size: 0.875rem;
+    }
+    .messages .success { background: rgba(92,224,138,0.1); border: 1px solid rgba(92,224,138,0.3); color: var(--success); }
+    .messages .error { background: rgba(224,92,92,0.1); border: 1px solid rgba(224,92,92,0.3); color: var(--danger); }
+
+    /* DIVIDER */
+    hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+
+    /* EMPTY STATE */
+    .empty-state {
+      text-align: center; padding: 4rem 2rem;
+      color: var(--text-muted);
+    }
+    .empty-state .icon { font-size: 4rem; margin-bottom: 1rem; }
+    .empty-state h3 { font-family: 'Playfair Display', serif; color: var(--text); margin-bottom: 0.5rem; }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 1rem; }
+      .container { padding: 0 1rem; }
+      .nav-links a span { display: none; }
+      .movie-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
+    }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <nav>
+    <a href="{% url 'home' %}" class="nav-brand">2M<span>Watch</span></a>
+    {% if user.is_authenticated %}
+    <div class="nav-links">
+      <a href="{% url 'home' %}"><span>🎯</span> For You</a>
+      <a href="{% url 'movie_list' %}"><span>🎬</span> Browse</a>
+      <a href="{% url 'watchlist' %}"><span>📌</span> Watchlist</a>
+    </div>
+    <div class="nav-user">
+      <a href="{% url 'profile' %}" class="btn btn-ghost">{{ user.username }}</a>
+      <a href="{% url 'logout' %}" class="btn btn-ghost">Sign out</a>
+    </div>
+    {% else %}
+    <div style="display:flex;gap:0.5rem;">
+      <a href="{% url 'login' %}" class="btn btn-ghost">Sign in</a>
+      <a href="{% url 'register' %}" class="btn btn-gold">Get Started</a>
+    </div>
+    {% endif %}
+  </nav>
+
+  {% if messages %}
+  <div class="container" style="padding-top:1rem;">
+    <ul class="messages">
+      {% for message in messages %}
+      <li class="{{ message.tags }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% block content %}{% endblock %}
+
+  <script>
+    // Star rating widget
+    document.querySelectorAll('.star-rating').forEach(widget => {
+      const stars = widget.querySelectorAll('.star');
+      const movieId = widget.dataset.movie;
+      const csrfToken = '{{ csrf_token }}';
+
+      stars.forEach((star, idx) => {
+        star.addEventListener('mouseenter', () => {
+          stars.forEach((s, i) => s.classList.toggle('hover', i <= idx));
+        });
+        star.addEventListener('mouseleave', () => {
+          stars.forEach(s => s.classList.remove('hover'));
+        });
+        star.addEventListener('click', async () => {
+          const score = idx + 1;
+          const res = await fetch(`/movies/${movieId}/rate/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `score=${score}`
+          });
+          if (res.ok) {
+            const data = await res.json();
+            stars.forEach((s, i) => s.classList.toggle('filled', i < score));
+            const avgEl = widget.closest('.movie-card, .rating-section')?.querySelector('.avg-rating');
+            if (avgEl) avgEl.textContent = `★ ${data.avg_rating}`;
+          }
+        });
+      });
+    });
+
+    // Watchlist toggle
+    document.querySelectorAll('.watchlist-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault(); e.stopPropagation();
+        const movieId = btn.dataset.movie;
+        const res = await fetch(`/movies/${movieId}/watchlist/`, {
+          method: 'POST',
+          headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          btn.classList.toggle('active', data.in_watchlist);
+          btn.title = data.in_watchlist ? 'Remove from watchlist' : 'Add to watchlist';
+          btn.textContent = data.in_watchlist ? '📌' : '＋';
+        }
+      });
+    });
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

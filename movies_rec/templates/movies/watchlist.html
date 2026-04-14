@@ -1,0 +1,60 @@
+{% extends 'movies/base.html' %}
+{% load movie_tags %}
+{% block title %}My Watchlist — 2MWatch{% endblock %}
+
+{% block content %}
+<div class="container page">
+  <div class="section-header">
+    <h1 class="section-title">My <span>Watchlist</span></h1>
+    <a href="{% url 'movie_list' %}" class="btn btn-ghost">+ Add more</a>
+  </div>
+
+  {% if items %}
+  <div class="movie-grid">
+    {% for item in items %}
+    {% with movie=item.movie %}
+    <div class="movie-card">
+      <button class="watchlist-btn active" data-movie="{{ movie.pk }}">📌</button>
+      {% if movie.poster_url %}
+      <img class="poster" src="{{ movie.poster_url }}" alt="{{ movie.title }}" loading="lazy"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="poster-placeholder" style="display:none">🎬</div>
+      {% else %}
+      <div class="poster-placeholder">🎬</div>
+      {% endif %}
+      <div class="card-body">
+        <div class="card-title"><a href="{% url 'movie_detail' movie.pk %}">{{ movie.title }}</a></div>
+        <div class="card-meta">
+          <span>{{ movie.release_year }}</span>
+          <span>·</span>
+          <span>★ {{ movie.average_rating }}</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.5rem;">
+          {% for genre in movie.genres.all|slice:":2" %}
+          <span class="badge">{{ genre.name }}</span>
+          {% endfor %}
+        </div>
+        <div class="stars star-rating" data-movie="{{ movie.pk }}">
+          {% for i in "12345" %}
+          <span class="star {% if user_ratings|get_item:movie.pk >= forloop.counter %}filled{% endif %}"
+                data-score="{{ forloop.counter }}">★</span>
+          {% endfor %}
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.5rem;">
+          Added {{ item.added_at|date:"M j, Y" }}
+        </div>
+      </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">📌</div>
+    <h3>Your watchlist is empty</h3>
+    <p>Add movies with the + button while browsing.</p>
+    <a href="{% url 'movie_list' %}" class="btn btn-gold" style="margin-top:1rem;">Discover Movies</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

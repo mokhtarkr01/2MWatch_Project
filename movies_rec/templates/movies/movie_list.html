@@ -1,0 +1,109 @@
+{% extends 'movies/base.html' %}
+{% load movie_tags %}
+{% block title %}Browse Movies — 2MWatch{% endblock %}
+
+{% block extra_css %}
+<style>
+.filter-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+}
+.filter-bar input[type="text"] {
+  flex: 1; min-width: 200px;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 0.6rem 1rem; border-radius: 8px;
+  font-family: inherit; font-size: 0.9rem;
+  transition: border-color 0.2s; outline: none;
+}
+.filter-bar input[type="text"]:focus { border-color: var(--accent); }
+.filter-bar select {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 0.6rem 1rem; border-radius: 8px;
+  font-family: inherit; font-size: 0.9rem; cursor: pointer;
+  outline: none;
+}
+.filter-bar select:focus { border-color: var(--accent); }
+.results-count { color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container page">
+  <div class="section-header">
+    <h1 class="section-title">Browse <span>Movies</span></h1>
+  </div>
+
+  <form class="filter-bar" method="get">
+    <input type="text" name="q" placeholder="Search by title or director…" value="{{ query }}">
+    <select name="genre">
+      <option value="">All Genres</option>
+      {% for genre in genres %}
+      <option value="{{ genre.pk }}" {% if selected_genre == genre.pk|stringformat:"s" %}selected{% endif %}>
+        {{ genre.name }}
+      </option>
+      {% endfor %}
+    </select>
+    <select name="sort">
+      <option value="title" {% if sort == 'title' %}selected{% endif %}>Sort: A–Z</option>
+      <option value="year" {% if sort == 'year' %}selected{% endif %}>Sort: Newest</option>
+      <option value="rating" {% if sort == 'rating' %}selected{% endif %}>Sort: Top Rated</option>
+    </select>
+    <button type="submit" class="btn btn-accent">Search</button>
+    {% if query or selected_genre %}
+    <a href="{% url 'movie_list' %}" class="btn btn-ghost">Clear</a>
+    {% endif %}
+  </form>
+
+  <p class="results-count">{{ movies|length }} movie{{ movies|length|pluralize }} found</p>
+
+  {% if movies %}
+  <div class="movie-grid">
+    {% for movie in movies %}
+    <div class="movie-card">
+      <button class="watchlist-btn {% if movie.pk in watchlist_ids %}active{% endif %}"
+              data-movie="{{ movie.pk }}">
+        {% if movie.pk in watchlist_ids %}📌{% else %}＋{% endif %}
+      </button>
+      {% if movie.poster_url %}
+      <img class="poster" src="{{ movie.poster_url }}" alt="{{ movie.title }}" loading="lazy"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="poster-placeholder" style="display:none">🎬</div>
+      {% else %}
+      <div class="poster-placeholder">🎬</div>
+      {% endif %}
+      <div class="card-body">
+        <div class="card-title"><a href="{% url 'movie_detail' movie.pk %}">{{ movie.title }}</a></div>
+        <div class="card-meta">
+          <span>{{ movie.release_year }}</span>
+          <span>·</span>
+          <span class="avg-rating">★ {{ movie.average_rating }}</span>
+          <span>({{ movie.rating_count }})</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-bottom:0.5rem;">
+          {% for genre in movie.genres.all|slice:":2" %}
+          <span class="badge">{{ genre.name }}</span>
+          {% endfor %}
+        </div>
+        <div class="stars star-rating" data-movie="{{ movie.pk }}">
+          {% for i in "12345" %}
+          <span class="star {% if user_ratings|get_item:movie.pk >= forloop.counter %}filled{% endif %}"
+                data-score="{{ forloop.counter }}">★</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">🎭</div>
+    <h3>No movies found</h3>
+    <p>Try a different search or genre filter.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
