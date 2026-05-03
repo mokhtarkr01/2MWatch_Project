@@ -12,4 +12,7 @@ urlpatterns = [
     path('watchlist/', views.watchlist, name='watchlist'),
     path('profile/', views.profile, name='profile'),
     path('register/', views.register, name='register'),
+    path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('matches/', views.matches, name='matches'),
+    path('matches/<int:match_id>/', views.chat, name='chat'),
 ]

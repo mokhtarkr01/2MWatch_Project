@@ -1,0 +1,126 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<style>
+  .alerts-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+  .alerts-header h1 { font-size: 1.4rem; color: #c8d8e8; margin: 0; }
+
+  .alert-actions { display: flex; gap: 0.75rem; }
+  .btn-clear {
+    padding: 0.4rem 1rem;
+    background: rgba(200,80,80,0.1);
+    border: 1px solid rgba(200,80,80,0.35);
+    border-radius: 6px;
+    color: #c85050;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+  .btn-clear:hover { background: rgba(200,80,80,0.22); }
+
+  .alert-panel {
+    background: #1e2a38;
+    border: 1px solid #2e3f52;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .alert-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid rgba(46,63,82,0.6);
+    transition: background 0.15s;
+  }
+  .alert-row:last-child { border-bottom: none; }
+  .alert-row:hover { background: rgba(255,255,255,0.02); }
+  .alert-row.unread { background: rgba(124,106,247,0.05); }
+
+  .alert-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #7c6af7;
+    flex-shrink: 0;
+  }
+  .alert-row.read .alert-dot { background: transparent; border: 1px solid #2e3f52; }
+
+  .alert-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+  .alert-body { flex: 1; }
+  .alert-msg { font-size: 0.875rem; color: #c8d8e8; }
+  .alert-time { font-size: 0.75rem; color: #8a9bb0; margin-top: 0.15rem; }
+
+  .type-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.55rem;
+    border-radius: 100px;
+    flex-shrink: 0;
+  }
+  .tag-rating   { background: rgba(232,201,109,0.12); color: #e8c96d; border: 1px solid rgba(232,201,109,0.25); }
+  .tag-comment  { background: rgba(124,106,247,0.12); color: #7c6af7; border: 1px solid rgba(124,106,247,0.25); }
+  .tag-register { background: rgba(92,224,138,0.1);   color: #5ce08a; border: 1px solid rgba(92,224,138,0.25); }
+
+  .empty-alerts {
+    padding: 3rem;
+    text-align: center;
+    color: #8a9bb0;
+    font-size: 0.875rem;
+  }
+  .empty-alerts .big { font-size: 2.5rem; margin-bottom: 0.75rem; }
+</style>
+
+<div class="alerts-header">
+  <h1>🔔 Alerts</h1>
+  <div class="alert-actions">
+    {% if alerts %}
+    <form method="post" action="{% url 'admin:alerts_clear' %}"
+          onsubmit="return confirm('Clear all alerts?');" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn-clear">🗑 Clear all</button>
+    </form>
+    {% endif %}
+    <a href="{% url 'admin:index' %}" style="color:#79aec8;font-size:0.85rem;text-decoration:none;line-height:2;">← Dashboard</a>
+  </div>
+</div>
+
+<div class="alert-panel">
+  {% if alerts %}
+    {% for alert in alerts %}
+    <div class="alert-row {% if not alert.read %}unread{% else %}read{% endif %}">
+      <div class="alert-dot"></div>
+      <div class="alert-icon">
+        {% if alert.alert_type == 'rating' %}⭐
+        {% elif alert.alert_type == 'comment' %}💬
+        {% else %}👤{% endif %}
+      </div>
+      <div class="alert-body">
+        <div class="alert-msg">{{ alert.message }}</div>
+        <div class="alert-time">{{ alert.created_at|date:"M d, Y — H:i" }}</div>
+      </div>
+      <span class="type-tag
+        {% if alert.alert_type == 'rating' %}tag-rating
+        {% elif alert.alert_type == 'comment' %}tag-comment
+        {% else %}tag-register{% endif %}">
+        {{ alert.get_alert_type_display }}
+      </span>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-alerts">
+      <div class="big">🔕</div>
+      No alerts yet. Activity from users will appear here.
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

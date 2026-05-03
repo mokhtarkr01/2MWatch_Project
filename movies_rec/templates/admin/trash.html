@@ -1,0 +1,160 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<style>
+  .trash-panel {
+    background: #1e2a38;
+    border: 1px solid #2e3f52;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+  .trash-panel h3 {
+    margin: 0;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #79aec8;
+    border-bottom: 1px solid #2e3f52;
+    background: rgba(255,255,255,0.03);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .trash-panel table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  .trash-panel th {
+    padding: 0.6rem 1rem;
+    text-align: left;
+    color: #8a9bb0;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #2e3f52;
+  }
+  .trash-panel td {
+    padding: 0.7rem 1rem;
+    color: #c8d8e8;
+    border-bottom: 1px solid rgba(46,63,82,0.5);
+    vertical-align: middle;
+  }
+  .trash-panel tr:last-child td { border-bottom: none; }
+  .trash-panel tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .btn-restore {
+    display: inline-block;
+    padding: 0.3rem 0.75rem;
+    background: rgba(121,174,200,0.12);
+    border: 1px solid #79aec8;
+    border-radius: 5px;
+    color: #79aec8;
+    text-decoration: none;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-restore:hover { background: rgba(121,174,200,0.25); }
+
+  .btn-delete {
+    display: inline-block;
+    padding: 0.3rem 0.75rem;
+    background: rgba(200,80,80,0.1);
+    border: 1px solid #c85050;
+    border-radius: 5px;
+    color: #c85050;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-delete:hover { background: rgba(200,80,80,0.25); }
+
+  .deleted-at { color: #8a9bb0; font-size: 0.78rem; }
+  .empty-msg { padding: 1.5rem 1rem; color: #8a9bb0; font-size: 0.85rem; text-align: center; }
+</style>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+  <h1 style="font-size:1.4rem;color:#c8d8e8;margin:0;">🗑️ Trash</h1>
+  <a href="{% url 'admin:index' %}" style="color:#79aec8;font-size:0.85rem;text-decoration:none;">← Back to Dashboard</a>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+  <div style="padding:0.65rem 1rem;margin-bottom:1rem;border-radius:6px;
+    {% if message.tags == 'success' %}background:rgba(92,200,130,0.1);border:1px solid rgba(92,200,130,0.4);color:#5cc882;
+    {% else %}background:rgba(200,80,80,0.1);border:1px solid rgba(200,80,80,0.4);color:#c85050;{% endif %}
+    font-size:0.875rem;">
+    {{ message }}
+  </div>
+  {% endfor %}
+{% endif %}
+
+<!-- Deleted Movies -->
+<div class="trash-panel">
+  <h3>
+    <span>🎬 Deleted Movies</span>
+    <span style="color:#8a9bb0;font-weight:400;">{{ deleted_movies.count }} item{{ deleted_movies.count|pluralize }}</span>
+  </h3>
+  {% if deleted_movies %}
+  <table>
+    <thead>
+      <tr><th>Title</th><th>Year</th><th>Director</th><th>Deleted at</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+      {% for movie in deleted_movies %}
+      <tr>
+        <td>{{ movie.title }}</td>
+        <td style="color:#8a9bb0;">{{ movie.release_year }}</td>
+        <td style="color:#8a9bb0;">{{ movie.director|default:"—" }}</td>
+        <td class="deleted-at">{{ movie.deleted_at|date:"Y-m-d H:i" }}</td>
+        <td style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          <a href="{% url 'admin:trash_restore' 'movie' movie.pk %}" class="btn-restore">↩ Restore</a>
+          <form method="post" action="{% url 'admin:trash_delete' 'movie' movie.pk %}" style="display:inline;" onsubmit="return confirm('Permanently delete \'{{ movie.title }}\'? This cannot be undone.');">
+            {% csrf_token %}
+            <button type="submit" class="btn-delete">✕ Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-msg">No deleted movies.</div>
+  {% endif %}
+</div>
+
+<!-- Deleted Genres -->
+<div class="trash-panel">
+  <h3>
+    <span>🏷️ Deleted Genres</span>
+    <span style="color:#8a9bb0;font-weight:400;">{{ deleted_genres.count }} item{{ deleted_genres.count|pluralize }}</span>
+  </h3>
+  {% if deleted_genres %}
+  <table>
+    <thead>
+      <tr><th>Name</th><th>Deleted at</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+      {% for genre in deleted_genres %}
+      <tr>
+        <td>{{ genre.name }}</td>
+        <td class="deleted-at">{{ genre.deleted_at|date:"Y-m-d H:i" }}</td>
+        <td style="display:flex;gap:0.5rem;">
+          <a href="{% url 'admin:trash_restore' 'genre' genre.pk %}" class="btn-restore">↩ Restore</a>
+          <form method="post" action="{% url 'admin:trash_delete' 'genre' genre.pk %}" style="display:inline;" onsubmit="return confirm('Permanently delete \'{{ genre.name }}\'?');">
+            {% csrf_token %}
+            <button type="submit" class="btn-delete">✕ Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-msg">No deleted genres.</div>
+  {% endif %}
+</div>
+
+{% endblock %}

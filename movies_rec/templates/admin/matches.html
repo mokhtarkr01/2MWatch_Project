@@ -1,0 +1,113 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<style>
+  .matches-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+  .matches-header h1 { font-size: 1.4rem; color: #c8d8e8; margin: 0; }
+
+  .match-panel {
+    background: #1e2a38;
+    border: 1px solid #2e3f52;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .match-row {
+    display: flex; align-items: center; gap: 1.25rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid rgba(46,63,82,0.6);
+    transition: background 0.15s;
+  }
+  .match-row:last-child { border-bottom: none; }
+  .match-row:hover { background: rgba(255,255,255,0.02); }
+
+  .avatars { display: flex; align-items: center; }
+  .av {
+    width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.95rem;
+    border: 2px solid #1e2a38;
+  }
+  .av1 { background: rgba(124,106,247,0.25); color: #7c6af7; }
+  .av2 { background: rgba(232,201,109,0.2); color: #e8c96d; margin-left: -10px; }
+
+  .match-users { flex: 1; }
+  .match-names { font-size: 0.9rem; color: #c8d8e8; font-weight: 600; }
+  .match-names span { color: #8a9bb0; font-weight: 400; margin: 0 0.35rem; }
+  .match-meta { font-size: 0.75rem; color: #8a9bb0; margin-top: 0.2rem; }
+
+  .shared-tags { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.4rem; }
+  .shared-tag {
+    font-size: 0.7rem; padding: 0.1rem 0.5rem;
+    background: rgba(232,201,109,0.1); color: #e8c96d;
+    border: 1px solid rgba(232,201,109,0.2); border-radius: 100px;
+  }
+
+  .msg-count {
+    font-size: 0.78rem; color: #8a9bb0;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid #2e3f52;
+    border-radius: 6px; padding: 0.25rem 0.65rem;
+    white-space: nowrap;
+  }
+  .btn-view {
+    padding: 0.35rem 0.9rem;
+    background: rgba(124,106,247,0.12);
+    border: 1px solid rgba(124,106,247,0.35);
+    border-radius: 6px; color: #7c6af7;
+    text-decoration: none; font-size: 0.8rem; font-weight: 600;
+    transition: background 0.2s; white-space: nowrap;
+  }
+  .btn-view:hover { background: rgba(124,106,247,0.25); }
+
+  .empty-state {
+    padding: 3rem; text-align: center;
+    color: #8a9bb0; font-size: 0.875rem;
+  }
+  .empty-state .big { font-size: 2.5rem; margin-bottom: 0.75rem; }
+</style>
+
+<div class="matches-header">
+  <h1>💘 User Matches</h1>
+  <a href="{% url 'admin:index' %}" style="color:#79aec8;font-size:0.85rem;text-decoration:none;">← Dashboard</a>
+</div>
+
+<div class="match-panel">
+  {% if match_data %}
+    {% for item in match_data %}
+    <div class="match-row">
+      <div class="avatars">
+        <div class="av av1">{{ item.match.user1.username|first|upper }}</div>
+        <div class="av av2">{{ item.match.user2.username|first|upper }}</div>
+      </div>
+      <div class="match-users">
+        <div class="match-names">
+          {{ item.match.user1.username }}
+          <span>↔</span>
+          {{ item.match.user2.username }}
+        </div>
+        <div class="match-meta">
+          Matched {{ item.match.created_at|date:"M d, Y" }} &nbsp;·&nbsp;
+          {{ item.shared_count }} shared rating{{ item.shared_count|pluralize }}
+        </div>
+        <div class="shared-tags">
+          {% for movie in item.shared %}
+          <span class="shared-tag">{{ movie.title }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="msg-count">💬 {{ item.match.msg_count }} msg{{ item.match.msg_count|pluralize }}</div>
+      <a href="{% url 'admin:match_chat' item.match.pk %}" class="btn-view">View Chat</a>
+    </div>
+    {% endfor %}
+  {% else %}
+  <div class="empty-state">
+    <div class="big">🎯</div>
+    No matches yet. They appear when 2 users rate 3+ movies with the same score.
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

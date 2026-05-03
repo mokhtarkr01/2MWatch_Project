@@ -218,8 +218,15 @@
       <a href="{% url 'home' %}"><span>🎯</span> For You</a>
       <a href="{% url 'movie_list' %}"><span>🎬</span> Browse</a>
       <a href="{% url 'watchlist' %}"><span>📌</span> Watchlist</a>
+      <a href="{% url 'matches' %}" style="position:relative;">
+        <span>💘</span> Matches
+        {% if unread_matches %}<span style="position:absolute;top:2px;right:2px;background:var(--accent);color:white;border-radius:50%;width:16px;height:16px;font-size:0.6rem;display:flex;align-items:center;justify-content:center;font-weight:700;">{{ unread_matches }}</span>{% endif %}
+      </a>
     </div>
     <div class="nav-user">
+      {% if user.is_staff %}
+      <a href="{% url 'admin_dashboard' %}" class="btn btn-ghost" style="color:var(--gold);border-color:rgba(232,201,109,0.3);">⚙ Dashboard</a>
+      {% endif %}
       <a href="{% url 'profile' %}" class="btn btn-ghost">{{ user.username }}</a>
       <a href="{% url 'logout' %}" class="btn btn-ghost">Sign out</a>
     </div>

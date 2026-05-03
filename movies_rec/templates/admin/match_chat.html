@@ -1,0 +1,103 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<style>
+  .chat-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+  .chat-header h1 { font-size: 1.2rem; color: #c8d8e8; margin: 0; }
+
+  .chat-box {
+    background: #1e2a38;
+    border: 1px solid #2e3f52;
+    border-radius: 8px;
+    overflow: hidden;
+    max-width: 720px;
+  }
+  .chat-subheader {
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid #2e3f52;
+    display: flex; gap: 1rem; align-items: center;
+    background: rgba(255,255,255,0.02);
+  }
+  .av {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.85rem;
+  }
+  .av1 { background: rgba(124,106,247,0.25); color: #7c6af7; }
+  .av2 { background: rgba(232,201,109,0.2); color: #e8c96d; }
+  .chat-names { font-size: 0.875rem; color: #c8d8e8; font-weight: 600; }
+  .chat-names span { color: #8a9bb0; font-weight: 400; margin: 0 0.3rem; }
+
+  .messages-list {
+    padding: 1.25rem;
+    display: flex; flex-direction: column; gap: 0.75rem;
+    max-height: 520px; overflow-y: auto;
+  }
+  .msg-row { display: flex; gap: 0.75rem; align-items: flex-start; }
+  .msg-av {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700;
+  }
+  .bubble {
+    background: #111820;
+    border: 1px solid #2e3f52;
+    border-radius: 12px; border-top-left-radius: 3px;
+    padding: 0.55rem 0.9rem;
+    max-width: 75%;
+  }
+  .bubble .sender { font-size: 0.72rem; color: #8a9bb0; margin-bottom: 0.2rem; font-weight: 600; }
+  .bubble .body { font-size: 0.875rem; color: #c8d8e8; word-break: break-word; }
+  .bubble .time { font-size: 0.68rem; color: #4b5563; margin-top: 0.25rem; }
+
+  .empty-chat {
+    padding: 2.5rem; text-align: center;
+    color: #8a9bb0; font-size: 0.85rem;
+  }
+</style>
+
+<div class="chat-header">
+  <h1>💬 {{ match.user1.username }} ↔ {{ match.user2.username }}</h1>
+  <a href="{% url 'admin:matches' %}" style="color:#79aec8;font-size:0.85rem;text-decoration:none;">← All Matches</a>
+</div>
+
+<div class="chat-box">
+  <div class="chat-subheader">
+    <div class="av av1">{{ match.user1.username|first|upper }}</div>
+    <div class="av av2">{{ match.user2.username|first|upper }}</div>
+    <div class="chat-names">
+      {{ match.user1.username }} <span>↔</span> {{ match.user2.username }}
+    </div>
+    <span style="margin-left:auto;font-size:0.75rem;color:#8a9bb0;">
+      Matched {{ match.created_at|date:"M d, Y" }}
+    </span>
+  </div>
+
+  <div class="messages-list" id="msg-list">
+    {% if messages %}
+      {% for msg in messages %}
+      <div class="msg-row">
+        <div class="msg-av {% if msg.sender == match.user1 %}av1{% else %}av2{% endif %}">
+          {{ msg.sender.username|first|upper }}
+        </div>
+        <div class="bubble">
+          <div class="sender">{{ msg.sender.username }}</div>
+          <div class="body">{{ msg.body }}</div>
+          <div class="time">{{ msg.created_at|date:"M d, Y H:i" }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="empty-chat">No messages in this chat yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  const list = document.getElementById('msg-list');
+  if (list) list.scrollTop = list.scrollHeight;
+</script>
+{% endblock %}

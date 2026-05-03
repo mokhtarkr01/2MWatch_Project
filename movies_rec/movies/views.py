@@ -1,12 +1,14 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from django.db.models import Q, Avg
-from .models import Movie, Rating, Watchlist, Genre
+from django.db.models import Q, Avg, Count
+from django.contrib.auth.models import User
+from .models import Movie, Rating, Watchlist, Genre, Match, Message, AdminAlert
 from .recommender import get_recommendations, get_similar_movies
+from .matcher import find_and_create_matches
 
 
 @login_required
@@ -137,6 +139,11 @@ def add_comment(request, pk):
     if not created:
         rating.comment = comment_text
         rating.save(update_fields=['comment', 'updated_at'])
+        if comment_text:
+            AdminAlert.objects.create(
+                alert_type='comment',
+                message=f"{request.user.username} commented on \"{movie.title}\"",
+            )
 
     return redirect('movie_detail', pk=pk)
 
@@ -155,6 +162,9 @@ def rate_movie(request, pk):
         user=request.user, movie=movie,
         defaults={'score': score}
     )
+
+    # Check for new matches after rating
+    find_and_create_matches(request.user)
 
     return JsonResponse({
         'score': score,
@@ -238,3 +248,109 @@ def landing(request):
     if request.user.is_authenticated:
         return redirect('home')
     return render(request, 'movies/landing.html')
+
+
+@user_passes_test(lambda u: u.is_staff)
+def admin_dashboard(request):
+    """Custom admin dashboard with site-wide stats."""
+    total_movies = Movie.objects.count()
+    total_users = User.objects.count()
+    total_ratings = Rating.objects.count()
+    total_watchlist = Watchlist.objects.count()
+    total_genres = Genre.objects.count()
+
+    # Top 8 rated movies (min 1 rating)
+    top_movies = (
+        Movie.objects.annotate(avg=Avg('ratings__score'), cnt=Count('ratings'))
+        .filter(cnt__gt=0)
+        .order_by('-avg', '-cnt')[:8]
+    )
+
+    # Most active users by rating count
+    active_users = (
+        User.objects.annotate(
+            rating_count=Count('ratings'),
+            watchlist_count=Count('watchlist'),
+        )
+        .filter(rating_count__gt=0)
+        .order_by('-rating_count')[:8]
+    )
+
+    # Recent ratings
+    recent_ratings = (
+        Rating.objects.select_related('user', 'movie')
+        .order_by('-created_at')[:10]
+    )
+
+    # Genre distribution
+    genres_qs = (
+        Genre.objects.annotate(count=Count('movies'))
+        .order_by('-count')[:10]
+    )
+    max_count = genres_qs[0].count if genres_qs else 1
+    genre_stats = [
+        {'name': g.name, 'count': g.count, 'pct': round(g.count / max_count * 100)}
+        for g in genres_qs
+    ]
+
+    return render(request, 'movies/admin_dashboard.html', {
+        'stats': {
+            'movies': total_movies,
+            'users': total_users,
+            'ratings': total_ratings,
+            'watchlist': total_watchlist,
+            'genres': total_genres,
+        },
+        'top_movies': top_movies,
+        'active_users': active_users,
+        'recent_ratings': recent_ratings,
+        'genre_stats': genre_stats,
+    })
+
+
+@login_required
+def matches(request):
+    """List all matches for the current user."""
+    user_matches = Match.objects.filter(
+        Q(user1=request.user) | Q(user2=request.user)
+    ).select_related('user1', 'user2').order_by('-created_at')
+
+    match_data = []
+    for m in user_matches:
+        other = m.other_user(request.user)
+        unread = m.unread_count(request.user)
+        # Find shared same-score movies for display
+        my_ratings = {r.movie_id: r.score for r in request.user.ratings.all()}
+        other_ratings = {r.movie_id: r.score for r in other.ratings.all()}
+        shared_movies = Movie.objects.filter(
+            pk__in=[mid for mid, score in my_ratings.items() if other_ratings.get(mid) == score]
+        )[:5]
+        match_data.append({'match': m, 'other': other, 'unread': unread, 'shared': shared_movies})
+
+    return render(request, 'movies/matches.html', {'match_data': match_data})
+
+
+@login_required
+def chat(request, match_id):
+    """Chat view for a specific match."""
+    match = get_object_or_404(Match, pk=match_id)
+    if request.user not in (match.user1, match.user2):
+        return redirect('matches')
+
+    other = match.other_user(request.user)
+
+    # Mark incoming messages as read
+    match.messages.filter(read=False).exclude(sender=request.user).update(read=True)
+
+    if request.method == 'POST':
+        body = request.POST.get('body', '').strip()
+        if body:
+            Message.objects.create(match=match, sender=request.user, body=body)
+        return redirect('chat', match_id=match_id)
+
+    messages_qs = match.messages.select_related('sender').all()
+    return render(request, 'movies/chat.html', {
+        'match': match,
+        'other': other,
+        'messages': messages_qs,
+    })

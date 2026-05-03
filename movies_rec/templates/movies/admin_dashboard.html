@@ -1,0 +1,284 @@
+{% extends "movies/base.html" %}
+{% block title %}Admin Dashboard — 2MWatch{% endblock %}
+
+{% block extra_css %}
+<style>
+  .dash-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: rgba(255,255,255,0.15); }
+  .stat-card .icon { font-size: 1.75rem; }
+  .stat-card .value {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.25rem;
+    font-weight: 900;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .stat-card .label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+  .panel-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .panel-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+  .panel-body { padding: 0; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+  td {
+    padding: 0.85rem 1.5rem;
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .score-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: var(--gold-dim);
+    color: var(--gold);
+    border-radius: 100px;
+    padding: 0.15rem 0.6rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+
+  .quick-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+  }
+  .quick-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.1rem;
+    border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .quick-link:hover { border-color: var(--gold); color: var(--gold); }
+
+  .genre-bar-wrap { padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
+  .genre-row { display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; }
+  .genre-name { width: 110px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .genre-bar-bg { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .genre-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; }
+  .genre-count { width: 30px; text-align: right; color: var(--text-muted); font-size: 0.8rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container page">
+
+  <div class="section-header" style="margin-bottom:2rem;">
+    <div>
+      <div class="section-title">Admin <span>Dashboard</span></div>
+      <div style="color:var(--text-muted);font-size:0.875rem;margin-top:0.25rem;">Welcome back, {{ request.user.username }}</div>
+    </div>
+    <a href="/admin/" class="btn btn-ghost">Django Admin ↗</a>
+  </div>
+
+  <!-- Stats -->
+  <div class="dash-grid">
+    <div class="stat-card">
+      <div class="icon">🎬</div>
+      <div class="value">{{ stats.movies }}</div>
+      <div class="label">Total Movies</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon">👥</div>
+      <div class="value">{{ stats.users }}</div>
+      <div class="label">Registered Users</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon">⭐</div>
+      <div class="value">{{ stats.ratings }}</div>
+      <div class="label">Ratings Given</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon">📌</div>
+      <div class="value">{{ stats.watchlist }}</div>
+      <div class="label">Watchlist Entries</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon">🏷️</div>
+      <div class="value">{{ stats.genres }}</div>
+      <div class="label">Genres</div>
+    </div>
+  </div>
+
+  <!-- Quick Links -->
+  <div class="panel" style="margin-bottom:2rem;">
+    <div class="panel-header"><span class="panel-title">Quick Actions</span></div>
+    <div class="quick-links">
+      <a href="/admin/movies/movie/add/" class="quick-link">➕ Add Movie</a>
+      <a href="/admin/movies/genre/add/" class="quick-link">🏷️ Add Genre</a>
+      <a href="/admin/movies/movie/" class="quick-link">🎬 Manage Movies</a>
+      <a href="/admin/auth/user/" class="quick-link">👥 Manage Users</a>
+      <a href="/admin/movies/rating/" class="quick-link">⭐ View Ratings</a>
+      <a href="/admin/movies/watchlist/" class="quick-link">📌 View Watchlists</a>
+    </div>
+  </div>
+
+  <div class="two-col">
+
+    <!-- Top Rated Movies -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Top Rated Movies</span>
+        <a href="/admin/movies/movie/" class="btn btn-ghost" style="padding:0.3rem 0.75rem;font-size:0.8rem;">View all</a>
+      </div>
+      <div class="panel-body">
+        <table>
+          <thead>
+            <tr><th>Movie</th><th>Avg</th><th>Ratings</th></tr>
+          </thead>
+          <tbody>
+            {% for movie in top_movies %}
+            <tr>
+              <td><a href="{% url 'movie_detail' movie.pk %}" style="color:var(--text);text-decoration:none;">{{ movie.title }}</a></td>
+              <td><span class="score-pill">★ {{ movie.avg }}</span></td>
+              <td style="color:var(--text-muted);">{{ movie.cnt }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" style="color:var(--text-muted);text-align:center;">No ratings yet</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Most Active Users -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Most Active Users</span>
+        <a href="/admin/auth/user/" class="btn btn-ghost" style="padding:0.3rem 0.75rem;font-size:0.8rem;">View all</a>
+      </div>
+      <div class="panel-body">
+        <table>
+          <thead>
+            <tr><th>User</th><th>Ratings</th><th>Watchlist</th></tr>
+          </thead>
+          <tbody>
+            {% for u in active_users %}
+            <tr>
+              <td>{{ u.username }}</td>
+              <td style="color:var(--gold);">{{ u.rating_count }}</td>
+              <td style="color:var(--text-muted);">{{ u.watchlist_count }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" style="color:var(--text-muted);text-align:center;">No users yet</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="two-col">
+
+    <!-- Recent Ratings -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Recent Ratings</span>
+      </div>
+      <div class="panel-body">
+        <table>
+          <thead>
+            <tr><th>User</th><th>Movie</th><th>Score</th></tr>
+          </thead>
+          <tbody>
+            {% for r in recent_ratings %}
+            <tr>
+              <td style="color:var(--text-muted);">{{ r.user.username }}</td>
+              <td><a href="{% url 'movie_detail' r.movie.pk %}" style="color:var(--text);text-decoration:none;">{{ r.movie.title }}</a></td>
+              <td><span class="score-pill">{{ r.score }}★</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" style="color:var(--text-muted);text-align:center;">No ratings yet</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Movies by Genre -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Movies by Genre</span>
+      </div>
+      <div class="genre-bar-wrap">
+        {% for g in genre_stats %}
+        <div class="genre-row">
+          <span class="genre-name" title="{{ g.name }}">{{ g.name }}</span>
+          <div class="genre-bar-bg">
+            <div class="genre-bar-fill" style="width:{{ g.pct }}%"></div>
+          </div>
+          <span class="genre-count">{{ g.count }}</span>
+        </div>
+        {% empty %}
+        <p style="color:var(--text-muted);font-size:0.875rem;">No genres yet</p>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
